@@ -8,10 +8,11 @@ kafka_broker = "kafka:9092"
 topic = "asteroid_data"
 
 # Créer un producer Kafka
-producer = KafkaProducer(bootstrap_servers=kafka_broker, value_serializer=lambda v: json.dumps(v).encode('utf-8') , max_request_size=2000000000)
-
-# Liste des planètes fixes (ici seulement la Terre)
-planets = ["Terre"]
+producer = KafkaProducer(
+    bootstrap_servers=kafka_broker,
+    value_serializer=lambda v: json.dumps(v).encode('utf-8'),
+    max_request_size=2000000000
+)
 
 # Fonction pour générer la Terre avec des coordonnées fixes
 def generate_planets():
@@ -19,8 +20,8 @@ def generate_planets():
         {
             "planet": "Terre",
             "position": {
-                "x": 0,  
-                "y": 0, 
+                "x": 0,  # Coordonnées fixes de la Terre
+                "y": 0,
                 "z": 0   
             }
         }
