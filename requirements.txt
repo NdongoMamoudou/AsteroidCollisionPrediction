@@ -3,6 +3,4 @@ Werkzeug==3.0.2
 hdfs==2.6.0
 kafka-python
 pyspark
-
-
-
+pyarrow

@@ -1,77 +1,67 @@
 from kafka import KafkaProducer
-import time
-import random
 import json
+import random
+import time
 
-# Configuration de Kafka
-kafka_broker = "kafka:9092"
-topic = "asteroid_data"
+# Configuration du producteur Kafka
+KAFKA_BROKER = "kafka:9092"
+TOPIC = "AsteroidesTopic"
 
-# Créer un producer Kafka
 producer = KafkaProducer(
-    bootstrap_servers=kafka_broker,
-    value_serializer=lambda v: json.dumps(v).encode('utf-8'),
-    max_request_size=2000000000
+    bootstrap_servers=[KAFKA_BROKER],
+    value_serializer=lambda v: json.dumps(v).encode('utf-8')
 )
 
-# Fonction pour générer la Terre avec des coordonnées fixes
-def generate_planets():
-    return [
-        {
-            "planet": "Terre",
-            "position": {
-                "x": 0,  # Coordonnées fixes de la Terre
-                "y": 0,
-                "z": 0   
-            }
-        }
-    ]
+# Coordonnées fixes de la planète
+PLANET = {
+    "type": "planet",
+    "planet": "Earth",
+    "position": {"x": 0.0, "y": 0.0, "z": 0.0}
+}
 
-# Fonction pour générer un astéroïde aléatoire
-def generate_asteroid(id):
+# Envoi des données de la Terre une seule fois
+producer.send(TOPIC, value=PLANET)
+print(f"✅ Données de la planète envoyées : {json.dumps(PLANET, indent=2)}")
+
+def generate_asteroid_data():
+    asteroid_id = f"asteroid_{random.randint(1, 1000):03d}"
+    position = {
+        "x": round(random.uniform(-1e6, 1e6), 2),
+        "y": round(random.uniform(-1e6, 1e6), 2),
+        "z": round(random.uniform(-1e6, 1e6), 2)
+    }
+    velocity = {
+        "vx": round(random.uniform(-50, 50), 2),
+        "vy": round(random.uniform(-50, 50), 2),
+        "vz": round(random.uniform(-50, 50), 2)
+    }
+    size = round(random.uniform(0.5, 10.0), 2)
+    mass = round(random.uniform(1e10, 1e15), 2)
+    
     return {
-        "id": id,
-        "position": {
-            "x": random.uniform(-1e5, 1e5),
-            "y": random.uniform(-1e5, 1e5),
-            "z": random.uniform(-1e5, 1e5)
-        },
-        "velocity": {
-            "vx": random.uniform(-50, 50),
-            "vy": random.uniform(-50, 50),
-            "vz": random.uniform(-50, 50)
-        },
-        "size": random.uniform(1, 3),
-        "mass": random.uniform(1e12, 3e12)
+        "type": "asteroid",
+        "id": asteroid_id,
+        "position": position,
+        "velocity": velocity,
+        "size": size,
+        "mass": mass
     }
 
-# Fonction pour envoyer des planètes et des astéroïdes
-def send_data():
-    asteroid_id = 1  
-    while True:
-        # Générer les données pour la Terre
-        planets_data = generate_planets()
-        
-        # Générer un certain nombre d'astéroïdes (par exemple, 5 astéroïdes)
-        asteroids_data = [generate_asteroid(f"asteroid_{asteroid_id + i}") for i in range(5)]
-        
-        # Créer un message à envoyer à Kafka
-        message = {
-            "planets": planets_data,
-            "asteroids": asteroids_data
-        }
-        
-        # Envoyer les données au topic Kafka
-        producer.send(topic, message)
-        
-        # Afficher ce qui est envoyé (utile pour déboguer)
-        print(f"Envoyé au Kafka Topic '{topic}': {message}")
-        
-        # Incrémenter l'id des astéroïdes
-        asteroid_id += 5
-        
-        # Attendre 1 seconde avant d'envoyer les prochaines données
-        time.sleep(1)
+# Limite du nombre d'astéroïdes générés
+MAX_ASTEROIDS = 10000  
+count = 0
 
-if __name__ == "__main__":
-    send_data()
+while count < MAX_ASTEROIDS:
+    batch = [generate_asteroid_data() for _ in range(10)]
+    
+    for data in batch:
+        # Vérification que tous les messages contiennent "type"
+        if "type" not in data:
+            print("❌ Erreur : message sans clé 'type'", data)
+        else:
+            print(f"📤 Envoi de l'astéroïde : {json.dumps(data, indent=2)}")
+            producer.send(TOPIC, value=data)
+    
+    count += len(batch)
+    print(f"✅ Envoyé {len(batch)} astéroïdes, total : {count}")
+    time.sleep(2)
