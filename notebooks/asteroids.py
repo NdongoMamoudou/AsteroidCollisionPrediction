@@ -1,26 +1,27 @@
 from pyspark.sql import SparkSession
+from pyspark.sql.functions import col
 
 # Création de la session Spark
-spark = SparkSession.builder \
-    .appName("CelestialBodiesApp") \
-    .config("spark.hadoop.fs.defaultFS", "hdfs://namenode:9000") \
-    .getOrCreate()
+spark = SparkSession.builder.appName("AsteroidsApp").getOrCreate()
 
-# Essai de lecture du fichier CSV depuis HDFS
-file_path = "hdfs://namenode:9000/user/hdfs/kafka_data/celestial_bodies.csv"
+# Lecture du CSV
+df = spark.read.option("header", True).csv("hdfs://namenode:9000/user/hdfs/kafka_data/celestial_bodies.csv")
 
-# Vérification si le fichier existe sur HDFS
-try:
-    df = spark.read.option("header", "true").csv(file_path)
+# Conversion des colonnes en types numériques
+df = df.withColumn("mass", col("mass").cast("double")) \
+       .withColumn("size", col("size").cast("double")) \
+       .withColumn("x", col("x").cast("double")) \
+       .withColumn("y", col("y").cast("double")) \
+       .withColumn("z", col("z").cast("double")) \
+       .withColumn("vx", col("vx").cast("double")) \
+       .withColumn("vy", col("vy").cast("double")) \
+       .withColumn("vz", col("vz").cast("double"))
 
-    # Afficher les 5 premières lignes
-    df.show(5)
+# Afficher les 5 premières lignes après la conversion
+df.show(5)
 
-    # Afficher le schéma du DataFrame
-    df.printSchema()
+# Afficher le schéma mis à jour
+df.printSchema()
 
-except Exception as e:
-    print(f"Erreur lors de la lecture du fichier HDFS: {e}")
 
-# Arrêter la session Spark
-spark.stop()
+

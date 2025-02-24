@@ -165,6 +165,21 @@ services:
     command: >
       bash -c "hive --service hiveserver2 --hiveconf hive.metastore.uris=thrift://hive-metastore:9083"
 
+  jupyter-notebook:
+    image: jupyter/pyspark-notebook
+    container_name: jupyter-notebook
+    ports:
+      - "8888:8888"
+    environment:
+      - SPARK_MASTER=spark://spark-master:7077
+    volumes:
+      - ./app:/home/jovyan/work
+      - ./conf:/opt/hive/conf
+    depends_on:
+      - spark-master
+      - spark-worker-1
+    command: start-notebook.sh --NotebookApp.token=''
+
 volumes:
   hadoop_namenode:
   hadoop_datanode:

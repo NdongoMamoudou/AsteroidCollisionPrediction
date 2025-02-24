@@ -53,7 +53,7 @@ def generate_asteroid_data():
     return asteroid
 
 # Génération et envoi des astéroïdes
-MAX_ASTEROIDS = 100
+MAX_ASTEROIDS = 10000
 count = 0
 
 while count < MAX_ASTEROIDS:
